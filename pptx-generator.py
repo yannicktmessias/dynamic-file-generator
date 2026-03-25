@@ -1,6 +1,8 @@
 from tkinter import Tk, Frame, Button, Label, Text, Checkbutton, IntVar, filedialog
 from pptx import Presentation
 from pptxtopdf import convert
+from pathlib import Path
+import chardet
 # --hidden-import 'comtypes.stream' for auto-py-to-exe
 
 class Application:
@@ -95,11 +97,27 @@ class Application:
                 self.generate_files_button.configure(state='normal')
 
     #
+    @staticmethod
+    def _detect_encoding(file_name):
+        """Detect the file encoding and returns it."""
+        file_path = Path(file_name)
+
+        # We must read as binary (bytes) because we don't yet know encoding
+        blob = file_path.read_bytes()
+
+        detection = chardet.detect(blob)
+        encoding = detection["encoding"]
+
+        return encoding
+
+    #
     def generate_files(self):
         data = {}
-    
+
         data_file_path = self.data_file_path_label['text']
-        with open(data_file_path, 'r') as file:
+        detected_encoding = self._detect_encoding(data_file_path)
+
+        with open(data_file_path, mode='r', encoding=detected_encoding) as file:
             lines = file.read().strip().splitlines()
             
             # Get keys from first line
